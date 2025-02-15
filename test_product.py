@@ -44,5 +44,14 @@ def test_buying_zero_quantity_raises_exception():
 def test_buying_more_than_available_raises_exception():
     """Test that buying a larger quantity than exists raises an exception."""
     product_instance = Product("MacBook Air M2", price=1450, quantity=5)
-    with pytest.raises(ValueError, match=f"Insufficient stock to complete the purchase. Available: {product_instance.quantity}"):
+    with pytest.raises(ValueError,
+                       match=f"Insufficient stock to complete the purchase. Available: {product_instance.quantity}"):
         product_instance.buy(6)
+
+
+def test_buying_an_inactive_product_raises_exception():
+    """Test that buy an inactive product raises an exception"""
+    product_instance = Product("MacBook Air M2", price=1450, quantity=5)
+    product_instance.deactivate()
+    with pytest.raises(Exception, match="Cannot buy this product because it is inactive."):
+        product_instance.buy(5)
