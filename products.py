@@ -1,11 +1,12 @@
 import store
+from promotions import Promotion, PercentageDiscount, BuyTwoGetOneFree, SecondItemHalfPrice
 
 
 class Product:
     """Represents a product with a name, price, quantity, and active status."""
 
-    def __init__(self, name: str, price: float, quantity: int):
-        """Initializes the Product instance with name, price, and quantity."""
+    def __init__(self, name: str, price: float, quantity: int, promotion: Promotion = None):
+        """Initializes the Product instance with name, price, quantity, and an optional promotion."""
         if not name:
             raise ValueError("The name cannot be empty.")
         if price is None or price < 0:
@@ -17,6 +18,15 @@ class Product:
         self.price = price
         self.quantity = quantity
         self.active = True
+        self.promotion = promotion
+
+    def set_promotion(self, promotion: Promotion):
+        """Sets a promotion for the product."""
+        self.promotion = promotion
+
+    def get_promotion(self):
+        """Returns the current promotion applied to the product."""
+        return self.promotion
 
     def get_quantity(self) -> float:
         """Returns the current quantity of the product."""
@@ -53,17 +63,18 @@ class Product:
 
     def __str__(self) -> str:
         """Returns a formatted string representation of the product."""
-        return f"Product: {self.name} | Price: ${self.price:.2f} | Quantity: {self.quantity} | Active: {self.active}"
+        promotion_info = f" | Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"Product: {self.name} | Price: ${self.price:.2f} | Quantity: {self.quantity} | Active: {self.active}{promotion_info}"
 
     def __repr__(self) -> str:
         """Returns a string representation useful for debugging and lists."""
-        return f"Product({self.name!r}, Price: ${self.price:.2f}, Quantity: {self.quantity}, Active: {self.active})"
+        promotion_info = f" | Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"Product: {self.name} | Price: ${self.price:.2f} | Quantity: {self.quantity} | Active: {self.active}{promotion_info}"
 
     def buy(self, quantity: int) -> float:
         """
         Buys a given quantity of the product and returns the total price.
-        Raises an exception if the product is inactive, the quantity is <= 0,
-        or there is insufficient stock.
+        If a promotion exists, the promotion price is applied.
         """
         if not self.active:
             raise Exception("Cannot buy this product because it is inactive.")
@@ -72,8 +83,12 @@ class Product:
         if quantity > self.quantity:
             raise ValueError(f"Insufficient stock to complete the purchase. Available: {self.quantity}")
 
-        total_price = self.price * quantity
-        self.set_quantity(self.quantity - quantity)  # Updates quantity & deactivates if it hits 0
+        if self.promotion:
+            total_price = self.promotion.apply_promotion(self, quantity)
+        else:
+            total_price = self.price * quantity
+
+        self.set_quantity(self.quantity - quantity)
         return total_price
 
 
@@ -89,12 +104,14 @@ class NonStockedProduct(Product):
         raise ValueError("Non-stocked products cannot have a quantity.")
 
     def __str__(self) -> str:
-        """Returns a human-friendly string representation of non-stocked products."""
-        return f"Non-Stocked Product: {self.name} | Price: ${self.price:.2f}"
+        """Returns a formatted string representation of the product."""
+        promotion_info = f" | Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"Non-Stocked Product: {self.name} | Price: ${self.price:.2f} | Quantity: {self.quantity} | Active: {self.active}{promotion_info}"
 
     def __repr__(self) -> str:
         """Returns a string representation useful for debugging non-stocked products."""
-        return f"NonStockedProduct({self.name!r}, {self.price})"
+        promotion_info = f" | Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"Non-Stocked Product: {self.name} | Price: ${self.price:.2f} | Quantity: {self.quantity} | Active: {self.active}{promotion_info}"
 
     def show(self) -> str:
         """Returns a formatted string representation specific to non-stocked products."""
@@ -119,11 +136,13 @@ class LimitedProduct(Product):
 
     def __str__(self) -> str:
         """Returns a human-friendly string representation of limited products."""
-        return f"Limited Product: {self.name} | Price: ${self.price:.2f} | Quantity: {self.quantity} | Limit per order: {self.purchase_limit}"
+        promotion_info = f" | Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"Limited Product: {self.name} | Price: ${self.price:.2f} | Quantity: {self.quantity} | Active: {self.active}{promotion_info}"
 
     def __repr__(self) -> str:
         """Returns a string representation useful for debugging limited products."""
-        return f"LimitedProduct({self.name!r}, {self.price}, {self.quantity}, Limit={self.purchase_limit})"
+        promotion_info = f" | Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"Limited Product: {self.name} | Price: ${self.price:.2f} | Quantity: {self.quantity} | Active: {self.active}{promotion_info}"
 
     def show(self) -> str:
         """Returns a formatted string representation specific to limited products."""
@@ -138,6 +157,16 @@ def main():
                     NonStockedProduct("Windows License", price=125),
                     LimitedProduct("Shipping", price=10, quantity=250, purchase_limit=1)
                     ]
+
+    # Create promotion catalog
+    second_half_price = SecondItemHalfPrice("Second Half price!")
+    third_one_free = BuyTwoGetOneFree("Third One Free!")
+    thirty_percent = PercentageDiscount("30% off!", discount_percentage=30)
+
+    # Add promotions to products
+    product_list[0].set_promotion(second_half_price)
+    product_list[1].set_promotion(third_one_free)
+    product_list[3].set_promotion(thirty_percent)
     best_buy = store.Store(product_list)
     for product in best_buy.products_list:
         print(product)
