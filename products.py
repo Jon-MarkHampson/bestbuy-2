@@ -17,7 +17,7 @@ class Product:
         self._name = name
         self._price = price
         self._quantity = quantity
-        self._active = quantity > 0
+        self._active = True
         self._promotion = promotion
 
     @property
@@ -44,9 +44,9 @@ class Product:
         return self._promotion
 
     @promotion.setter
-    def promotion(self, value):
+    def promotion(self, promotion: Promotion):
         """Sets the promotion for the product."""
-        self._promotion = value
+        self._promotion = promotion
 
     @property
     def price(self):
@@ -126,6 +126,11 @@ class NonStockedProduct(Product):
         """Prevents modification of quantity for non-stocked products."""
         raise ValueError("Non-stocked products cannot have a quantity.")
 
+    def __str__(self) -> str:
+        """Returns a formatted string representation of the non-stocked product."""
+        promotion_info = f" | Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"Non Stocked Product: {self._name} | Price: ${self._price:.2f} | Active: {self._active}{promotion_info}"
+
 
 class LimitedProduct(Product):
     """Represents a product with a purchase limit per order."""
@@ -142,6 +147,25 @@ class LimitedProduct(Product):
         if quantity > self.purchase_limit:
             raise ValueError(f"Cannot purchase more than {self.purchase_limit} of this product per order.")
         return super().buy(quantity)
+
+    def __str__(self) -> str:
+        """Returns a formatted string representation of the limited product."""
+        promotion_info = f" | Promotion: {self.promotion.name}" if self.promotion else ""
+        return f"Limited Product: {self._name} | Price: ${self._price:.2f} | Quantity: {self._quantity} | Active: {self._active}{promotion_info}"
+
+
+class Shipping(LimitedProduct):
+    """Represents a shipping product with a one-time purchase limit per order."""
+
+    def __init__(self, name: str, price: float):
+        """Initializes a shipping item with a purchase limit of 1."""
+        super().__init__(name, price, quantity=250, purchase_limit=1)  # Shipping is always a single-use item
+
+    def __str__(self) -> str:
+        """Returns a formatted string representation of the shipping."""
+        return f"Shipping: {self.name} | Price: ${self.price:.2f} | One-time purchase per order"
+
+
 
 
 if __name__ == "__main__":
