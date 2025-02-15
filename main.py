@@ -60,7 +60,7 @@ def list_all_products_in_store(store_obj):
         print("No active products in store.")
     else:
         for idx, product in enumerate(products_in_store, start=1):
-            print(f"{idx}. {product.show()}")
+            print(f"{idx}. {product}")
 
     print("_________________________________________________\n")
 
