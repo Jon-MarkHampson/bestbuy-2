@@ -16,10 +16,14 @@ class PercentageDiscount(Promotion):
     """Applies a percentage discount to a product."""
 
     def __init__(self, name: str, discount_percentage: float):
+        if not (0 <= discount_percentage <= 100):
+            raise ValueError("Discount percentage must be between 0 and 100.")
         super().__init__(name)
         self.discount_percentage = discount_percentage
 
     def apply_promotion(self, product, quantity) -> float:
+        if quantity <= 0:
+            raise ValueError("Quantity must be at least 1 to apply promotion.")
         return (product.price * quantity) * ((100 - self.discount_percentage) / 100)
 
 
@@ -30,9 +34,15 @@ class SecondItemHalfPrice(Promotion):
         super().__init__(name)
 
     def apply_promotion(self, product, quantity) -> float:
+        if quantity <= 0:
+            raise ValueError("Quantity must be at least 1 to apply promotion.")
+
         full_price_items = quantity // 2 + quantity % 2
         half_price_items = quantity // 2
-        return (full_price_items * product.price) + (half_price_items * (product.price / 2))
+
+        total_price = (full_price_items * product.price) + (half_price_items * (product.price / 2))
+        # Ensure price is never negative
+        return max(total_price, 0)
 
 
 class BuyTwoGetOneFree(Promotion):
@@ -42,5 +52,10 @@ class BuyTwoGetOneFree(Promotion):
         super().__init__(name)
 
     def apply_promotion(self, product, quantity) -> float:
+        if quantity <= 0:
+            raise ValueError("Quantity must be at least 1 to apply promotion.")
+
         payable_items = (quantity // 3) * 2 + (quantity % 3)
-        return payable_items * product.price
+        total_price = payable_items * product.price
+        # Ensure price is never negative
+        return max(total_price, 0)
