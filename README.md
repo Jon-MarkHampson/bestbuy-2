@@ -1,107 +1,128 @@
-# Store Management App
-A simple command-line based Python application that simulates a store's inventory management.
-You can list products, check total stock, and place orders by choosing from a menu.
+# **Store Management App**  
+A simple **command-line** Python application for managing a store’s inventory. Users can **list products, check stock, and place orders** through an interactive menu.
 
-------------------------------
+---
 
-## Overview
-This Store Management App is a small project designed for learning Python classes, methods, and user interaction via a command-line interface. The key components are:
+## **Overview**  
+This Store Management App is a learning project that covers **Python classes, methods, and user interaction** in a command-line environment.  
 
-### Product:
-Defines a product's name, price, stock quantity, and whether it is active.
-### Store:
-Manages a list of Product objects, providing helper methods for adding products, removing products, displaying product inventory, calculating total stock, and processing orders.
-### Main Script:
-Provides a menu-driven CLI for users to list products, view total quantities, and make orders.
+### **Key Components**  
+#### **Product Module**  
+- Defines a product's name, price, stock quantity, and active status.  
+- Supports different product types: **Stocked Products, Non-Stocked Products, Limited Products, and Add-Ons**.  
+- Implements automatic deactivation when stock reaches zero.  
 
-## Project Structure
+#### **Store Module**  
+- Manages a list of `Product` objects.  
+- Provides helper methods for:  
+  - Listing active products  
+  - Checking total stock  
+  - Processing orders  
+
+#### **Main Script**  
+- Provides a **menu-driven CLI** to interact with the store.  
+- Uses a **dispatcher pattern** for efficient function handling.  
+
+---
+
+## **Project Structure**  
 
 ```bash
 .
 ├── main.py
 ├── products.py
 ├── store.py
+├── promotions.py
+├── text_colour_helper.py
+├── requirements.txt
 └── README.md
 ```
-### main.py
 
-Initializes some product instances and creates a Store object.
-Displays a text-based menu to the user, prompting for actions.
-Uses a dispatcher approach to call different functions based on the menu selection.
+### **`main.py`**  
+- Initializes products and creates a `Store` instance.  
+- Displays a **menu-driven CLI** for product management and ordering.  
+- Uses **color-coded text formatting** (via `text_colour_helper.py`).  
 
-### products.py
+### **`products.py`**  
+- Contains the `Product` class with various product types.  
+- Implements methods like `buy()`, `activate()`, and `deactivate()`.  
 
-Contains the Product class definition.
-Implements attributes (name, price, quantity, active) and methods (buy, activate, deactivate, etc.).
+### **`store.py`**  
+- Implements the `Store` class to manage products.  
+- Handles orders and stock tracking.  
 
+### **`promotions.py`**  
+- Implements promotional offers like **percentage discounts** and **buy-one-get-one deals**.  
 
-### store.py
+### **`text_colour_helper.py`**  
+- Adds **color-coded** output for better CLI readability.  
 
-Implements the Store class, which keeps track of a list of products.
-Includes methods for adding products, removing products, retrieving active products, computing total quantity, and processing an order.
+---
 
+## **Installation and Setup**  
 
-## Installation and Setup
-### Clone the repository
-
-clone https://github.com/Jon-MarkHampson/bestbuy.git
-
+### **Clone the Repository**  
 ```bash
-cd bestbuy
+git clone https://github.com/Jon-MarkHampson/bestbuy-2.git
+cd bestbuy-2
 ```
 
-
-Create and activate a virtual environment (optional but recommended)
-
+### **Create a Virtual Environment** (Optional, Recommended)  
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # Mac/Linux
+venv\\Scripts\\activate      # Windows
 ```
 
-Currently, there are no external dependencies.
-If there are in future there will be a requirements.txt (Skip for now - if they exist in the future use the command below.)
-
+### **Install Dependencies**  
 ```bash
-
 pip install -r requirements.txt
 ```
 
-------------------------------
+---
 
-## Features
-## Product Management
+## **Features**  
 
-Create, update, or remove Product instances.
-Automatically deactivates products when stock hits zero.
-Store Management
+### **Product Management**  
+✅ Add, update, or remove products.  
+✅ Automatically deactivates **out-of-stock** products.  
+✅ Supports **different product types** (Stocked, Non-Stocked, Limited, Add-Ons).  
 
-Aggregate and display total quantity of all products in one place.
-List active products.
-Ordering System
+### **Store Management**  
+✅ Lists active products with quantity, price, and promotions.  
+✅ Aggregates total stock quantity.  
 
-Buy a specified quantity of a product; automatically adjusts the product’s stock.
-Throws exceptions if insufficient stock or product is inactive.
+### **Ordering System**  
+✅ **New: Order Menu UI Improvements!**  
+✅ Supports **stocked & non-stocked** products.  
+✅ **Limited Products now enforce purchase limits.**  
+✅ **Shopping cart displays name, quantity, unit price, and subtotal.**  
+✅ Prevents duplicate **one-time purchase add-ons** from being added multiple times.  
+✅ Order validation ensures correct quantity selection.  
 
-## Contributing
-### Contributions are welcome! Here’s how you can get involved:
-- Fork the repository.
-- Create a new feature branch:
-```bash
-git checkout -b feature/<your-feature-name>
-```
+---
 
-- Commit your changes:
-```bash
-git commit -m "feat: add a cool new feature"
-```
+## **Contributing**  
+Contributions are welcome! To contribute:  
 
-- Push to your branch:
-```bash
-git push origin feature/<your-feature-name>
-```
+1. **Fork** the repository.  
+2. **Create a new feature branch:**  
+   ```bash
+   git checkout -b feature/<your-feature-name>
+   ```
+3. **Make changes and commit:**  
+   ```bash
+   git commit -m "feat: add a cool new feature"
+   ```
+4. **Push to your branch:**  
+   ```bash
+   git push origin feature/<your-feature-name>
+   ```
+5. **Create a Pull Request** describing your changes.  
 
-- Create a Pull Request describing your changes.
+---
 
-------------------------------
-## License
-This project is open source under the MIT License. Feel free to adapt and use it for your needs.
+## **License**  
+This project is open source under the **MIT License**. Feel free to adapt and use it!  
+
+---
