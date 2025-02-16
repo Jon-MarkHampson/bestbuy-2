@@ -1,7 +1,6 @@
 import products
 import store
 import promotions
-from bestbuy.products import Product
 from text_colour_helper import txt_clr
 
 
