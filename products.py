@@ -156,35 +156,35 @@ class LimitedProduct(Product):
     def __str__(self) -> str:
         """Returns a formatted string representation of the limited product."""
         promotion_info = f" | Promotion: {txt_clr.LR}{self.promotion.name}{txt_clr.RESET}" if self.promotion else ""
-        return f"Limited Product: {txt_clr.LY}{self._name}{txt_clr.RESET} | Price: ${txt_clr.LG}{self._price:.2f}{txt_clr.RESET} | Active: {txt_clr.LM}{self._active}{txt_clr.RESET}{promotion_info}"
+        return f"Limited Product: {txt_clr.LY}{self._name}{txt_clr.RESET} | Price: ${txt_clr.LG}{self._price:.2f}{txt_clr.RESET} | Active: {txt_clr.LM}{self._active}{txt_clr.RESET}{promotion_info} | Purchase Limit: {txt_clr.LC}{self.purchase_limit}{txt_clr.RESET}"
 
 
-class Shipping(LimitedProduct):
+class AddOns(LimitedProduct):
     """Represents a shipping product with a one-time purchase limit per order."""
 
     def __init__(self, name: str, price: float):
-        """Initializes a shipping item with a fixed quantity and purchase limit of 1."""
+        """Initializes a shipping item with a purchase limit of 1."""
         super().__init__(name, price, quantity=1, purchase_limit=1)
 
     @property
     def quantity(self):
-        """Always returns 1, ensuring shipping is always available. Shipping has no stock tracking"""
+        """Returns a fixed quantity of 1 for shipping since it is always available."""
         return 1
 
     @quantity.setter
     def quantity(self, value):
         """Prevents modifying the shipping quantity."""
-        raise ValueError("Shipping quantity cannot be modified.")
+        raise ValueError("Quantity cannot be modified.")
 
     def __str__(self) -> str:
         """Returns a formatted string representation of the shipping."""
-        return f"Shipping: {txt_clr.LY}{self.name}{txt_clr.RESET} | Price: ${txt_clr.LB}{self.price:.2f}{txt_clr.RESET} | One-time purchase per order"
+        return f"Add On: {txt_clr.LY}{self.name}{txt_clr.RESET} | Price: ${txt_clr.LB}{self.price:.2f}{txt_clr.RESET} | {txt_clr.LC}One-time purchase per order{txt_clr.RESET}"
 
     def buy(self, quantity: int) -> float:
-        """Ensures that the purchase quantity does not exceed the limit without reducing stock."""
+        """Ensures that the purchase quantity does not exceed the limit."""
         if quantity > self.purchase_limit:
             raise ValueError(f"Cannot purchase more than {self.purchase_limit} of this product per order.")
-        return self.price
+        return self._price
 
 
 if __name__ == "__main__":

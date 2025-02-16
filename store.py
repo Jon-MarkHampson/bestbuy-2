@@ -24,8 +24,8 @@ class Store:
             self._products_list.remove(product)
 
     def get_total_quantity(self) -> int:
-        """Gets the total quantity of all products in the store, excluding shipping."""
-        return sum(product.quantity for product in self._products_list if not isinstance(product, products.Shipping))
+        """Gets the total quantity of all products in the store, excluding AddOns."""
+        return sum(product.quantity for product in self._products_list if not isinstance(product, products.AddOns))
 
     def get_all_products(self) -> list:
         """Returns a list of all active products in the store.
@@ -34,7 +34,6 @@ class Store:
         return [product for product in self._products_list if product.active]
 
     def order(self, shopping_list: list) -> float:
-        """Processes the purchase of multiple products."""
         total_price = 0
         for product, quantity in shopping_list:
             total_price += product.buy(quantity)
