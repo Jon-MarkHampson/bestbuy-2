@@ -105,36 +105,36 @@ def show_shopping_cart(shopping_list):
 def make_an_order(store_obj):
     """
     Prompts the user to make an order, allowing them to add multiple items
-    before completing the purchase. It uses a temporary stock to show live changes
-    without modifying real store quantities until the order is finalized.
+    before completing the purchase. It uses a temporary stock (temp_stock) to
+    show live quantity changes without modifying real store quantities until final checkout.
     """
-    # Build a temp stock dictionary for normal products
+
+    # 1) Build a temp stock dictionary for normal/limited stocked products
     temp_stock = {}
     for p in store_obj.get_all_products():
-        # Only track real quantity for normal, stocked products
         if not isinstance(p, (products.AddOns, products.NonStockedProduct)) and p.active:
             temp_stock[p] = p.quantity
 
     order_incomplete = True
     shopping_list = []
-    shipping_added = False
 
     while order_incomplete:
-        # Gather active products, ensuring AddOns and LimitedProduct are removed once added
+        # 2) Gather active products, excluding already purchased one-time items
         products_in_store = [
             p for p in get_all_products_in_store(store_obj)
             if not (
-                # Exclude one-time purchase products if already in the shopping list
-                (isinstance(p, (products.AddOns, products.LimitedProduct)) and any(
-                    item[0] == p for item in shopping_list))
+                    isinstance(p, (products.AddOns, products.LimitedProduct))
+                    and any(item[0] == p for item in shopping_list)
             )
         ]
 
         print(f"\n--------------------- {txt_clr.LW}Make an Order{txt_clr.RESET} -------------------")
         print("_______________________________________________________\n")
 
-        # Display menu with the correct formatting
+        # 3) Display the available products
         for idx, product in enumerate(products_in_store, start=1):
+            current_temp_qty = temp_stock.get(product, product.quantity)
+
             if isinstance(product, products.AddOns):
                 print(
                     f"{idx}. Add On: {txt_clr.LY}{product.name}{txt_clr.RESET} "
@@ -145,34 +145,36 @@ def make_an_order(store_obj):
                 print(
                     f"{idx}. Limited Product: {txt_clr.LY}{product.name}{txt_clr.RESET} "
                     f"| Price: ${txt_clr.LG}{product.price:.2f}{txt_clr.RESET} "
-                    f"| Purchase Limit: {txt_clr.LC}{product.purchase_limit}{txt_clr.RESET}"
+                    f"| Temp Qty: {txt_clr.LB}{current_temp_qty}{txt_clr.RESET} "
+                    f"| Limit: {txt_clr.LC}{product.purchase_limit}{txt_clr.RESET}"
+                )
+            elif isinstance(product, products.NonStockedProduct):
+                promo_str = f" | Promotion: {txt_clr.LR}{product.promotion.name}{txt_clr.RESET}" if product.promotion else ""
+                print(
+                    f"{idx}. NonStocked: {txt_clr.LY}{product.name}{txt_clr.RESET} "
+                    f"| Price: ${txt_clr.LG}{product.price:.2f}{txt_clr.RESET}{promo_str}"
                 )
             else:
-                # Normal Products
                 promo_str = f" | Promotion: {txt_clr.LR}{product.promotion.name}{txt_clr.RESET}" if product.promotion else ""
                 print(
                     f"{idx}. Product: {txt_clr.LY}{product.name}{txt_clr.RESET} "
                     f"| Price: ${txt_clr.LG}{product.price:.2f}{txt_clr.RESET} "
-                    f"| Quantity: {txt_clr.LB}{product.quantity}{txt_clr.RESET}{promo_str}"
+                    f"| Temp Qty: {txt_clr.LB}{current_temp_qty}{txt_clr.RESET}{promo_str}"
                 )
 
         menu_size = len(products_in_store)
 
-        # Show "Show Cart" only if cart not empty
-        show_cart_option = None
+        # 4) Show cart & checkout options if cart is not empty
+        show_cart_option = complete_order_option = None
         if shopping_list:
             show_cart_option = menu_size + 1
             print(f"{show_cart_option}. {txt_clr.LC}Show Shopping Cart Contents{txt_clr.RESET}")
             menu_size += 1
-
-        # Show "Complete Order" only if cart not empty
-        complete_order_option = None
-        if shopping_list:
             complete_order_option = menu_size + 1
             print(f"{complete_order_option}. {txt_clr.LB}Complete Current Order{txt_clr.RESET}")
             menu_size += 1
 
-        # Always show "Exit Ordering Process"
+        # 5) Always show "Exit Ordering Process"
         exit_option = menu_size + 1
         print(f"{exit_option}. {txt_clr.LR}Exit Ordering Process{txt_clr.RESET}")
         menu_size += 1
@@ -181,89 +183,78 @@ def make_an_order(store_obj):
 
         choice = get_valid_int_input("\nEnter a product number or action: ", 1, menu_size)
 
-        # Handle "Exit Ordering Process" => cancel the order, do nothing to real stock
+        # 6) Handle menu choices
         if choice == exit_option:
             print(f"{txt_clr.LR}Order canceled. Returning to main menu...{txt_clr.RESET}")
             return None
-
-        # Handle "Show Shopping Cart"
         if show_cart_option and choice == show_cart_option:
             show_shopping_cart(shopping_list)
             continue
-
-        # Handle "Complete Order"
         if complete_order_option and choice == complete_order_option:
             order_incomplete = False
             break
 
-        # User picked an actual product from the menu
         chosen_product = products_in_store[choice - 1]
 
-        # If AddOn (one-time purchase, e.g., shipping, warranty, gift wrapping)
+        # --- ADDON (SHIPPING, WARRANTY, ETC.) ---
         if isinstance(chosen_product, products.AddOns):
-            # Add shipping with quantity=1
-            shopping_list.append((chosen_product, 1))
-            shipping_added = True
-            print(f"{txt_clr.LY}Shipping{txt_clr.RESET} added to shopping cart.")
-
-            # Prompt if user wants more
-            more_items = input("Do you want to add another item? (yes/no): ").strip().lower()
-            if more_items not in {"y", "yes", "yeah", "yep", "yup"}:
-                # Break the loop => proceed to shipping check
-                break
-            else:
+            # Ensure the addon is not already in the cart
+            if any(item[0] == chosen_product for item in shopping_list):
+                print(f"{txt_clr.LR}This add-on has already been added to the order.{txt_clr.RESET}")
                 continue
 
-        # If Limited Product
-        if isinstance(chosen_product, products.LimitedProduct):
-            order_quantity = get_valid_int_input(
-                f"Enter quantity for {txt_clr.LY}{chosen_product.name}{txt_clr.RESET} "
-                f"(Limit: {chosen_product.purchase_limit}): ", min_val=1, max_val=chosen_product.purchase_limit
-            )
-            shopping_list.append((chosen_product, order_quantity))
-            print(f"{txt_clr.LY}{chosen_product.name}{txt_clr.RESET} "
-                  f"| Quantity {txt_clr.LB}{order_quantity}{txt_clr.RESET} added to shopping cart.")
+            shopping_list.append((chosen_product, 1))
+            print(f"{txt_clr.LY}{chosen_product.name}{txt_clr.RESET} added to shopping cart.")
 
-        # If Non-Stocked Product
+        # --- LIMITED PRODUCT ---
+        elif isinstance(chosen_product, products.LimitedProduct):
+            current_temp_qty = temp_stock.get(chosen_product, chosen_product.quantity)
+
+            if current_temp_qty == 0:
+                print(f"{txt_clr.LR}Sorry, {chosen_product.name} is out of stock.{txt_clr.RESET}")
+                continue
+
+            order_quantity = get_valid_int_input(
+                f"Enter quantity for {txt_clr.LY}{chosen_product.name}{txt_clr.RESET} (Limit: {chosen_product.purchase_limit}): ",
+                min_val=1, max_val=min(chosen_product.purchase_limit, current_temp_qty)
+            )
+
+            temp_stock[chosen_product] -= order_quantity
+            shopping_list.append((chosen_product, order_quantity))
+            print(
+                f"{txt_clr.LY}{chosen_product.name}{txt_clr.RESET} | Quantity {txt_clr.LB}{order_quantity}{txt_clr.RESET} added to shopping cart.")
+
+        # --- NON-STOCKED PRODUCT ---
         elif isinstance(chosen_product, products.NonStockedProduct):
             order_quantity = get_valid_int_input(
-                f"Enter quantity for {txt_clr.LY}{chosen_product.name}{txt_clr.RESET}: ",
-                min_val=1
+                f"Enter quantity for {txt_clr.LY}{chosen_product.name}{txt_clr.RESET}: ", min_val=1
             )
-            # No stock limit to check, add directly
             shopping_list.append((chosen_product, order_quantity))
             print(f"{txt_clr.LY}{chosen_product.name}{txt_clr.RESET} x {order_quantity} added to cart.")
 
+        # --- NORMAL STOCKED PRODUCT ---
         else:
-            # Normal (stocked) product => check the temp stock
-            current_temp_qty = temp_stock[chosen_product]
+            current_temp_qty = temp_stock.get(chosen_product, chosen_product.quantity)
             order_quantity = get_valid_int_input(
                 f"Enter quantity for {txt_clr.LY}{chosen_product.name}{txt_clr.RESET}: ",
-                min_val=1
+                min_val=1, max_val=current_temp_qty
             )
 
-            if order_quantity <= current_temp_qty:
-                # Deduct from temp stock
-                temp_stock[chosen_product] = current_temp_qty - order_quantity
-                shopping_list.append((chosen_product, order_quantity))
-                print(f"{txt_clr.LY}{chosen_product.name}{txt_clr.RESET} "
-                      f"| Quantity {txt_clr.LB}{order_quantity}{txt_clr.RESET} added to shopping cart.")
-            else:
-                print(f"Insufficient temp stock for {txt_clr.LR}{order_quantity}{txt_clr.RESET}. "
-                      f"Only {txt_clr.LB}{current_temp_qty}{txt_clr.RESET} available.")
-                continue
+            temp_stock[chosen_product] -= order_quantity
+            shopping_list.append((chosen_product, order_quantity))
+            print(
+                f"{txt_clr.LY}{chosen_product.name}{txt_clr.RESET} | Quantity {txt_clr.LB}{order_quantity}{txt_clr.RESET} added to shopping cart.")
 
-        # Ask if user wants more items
+        # 7) Ask if user wants more items
         more_items = input("Do you want to add another item? (yes/no): ").strip().lower()
-        if more_items not in {"y", "yes", "yeah", "yep", "yup"}:
+        if more_items not in {"y", "yes"}:
             break
 
-    # After finishing or choosing "Complete Order", see if we need shipping
-    if not shipping_added:
-        # user might want shipping
-        shopping_list, shipping_added = check_and_offer_shipping(shopping_list, shipping_added)
+    # 8) Ensure shipping is only added once if required
+    if not any(isinstance(item[0], products.AddOns) for item in shopping_list):
+        shopping_list, _ = check_and_offer_shipping(shopping_list, False)
 
-    # Now finalize the purchase => real store changes happen here
+    # 9) Finalize the purchase
     try:
         total_price = store_obj.order(shopping_list)
         print(f"Order successful! Total cost: ${txt_clr.LG}{total_price:.2f}{txt_clr.RESET}")
